@@ -12,28 +12,33 @@ We keep the notations as much as the same in the paper
 
 #	===== Input Argument Foramt
 # gmm has format
-# 	gmm['mu']: (K,p,1)
-# 	gmm['prec']: (K,p,1) or (K,p,p)
-# 	gmm['cov']: (K,p,1) or (K,p,p), should be the same shape with gmm['prec']
+# 	gmm['mu']: (K,p)
+# 	gmm['prec']: (K,p,p)
+# 	gmm['cov']: (K,p,p)
 # 	gmm['w']: (K,)
 # X has format
 # 	(p, T), where p is dimension, T is number of observations
 # priorRatio is a scalar
 # 	representing the data number precentage of UBM
 # 	e.g. if T=500, and priorRatio=0.25, then we assume we have tau = (500/0.75)*0.25
-def gmmMap(gmm,X,priorRatio,maxItrNum=10,adptW=False,adptM=True,adptCov=False,hyper=None):
+def gmmMap(in_gmm,X,priorRatio,maxItrNum=10,adptW=False,adptM=True,adptCov=False,hyper=None):
 	eps = np.finfo(float).eps
 	X = np.array(X)	# (p,T)
 	assert(X.ndim==2)
 	p, T = X.shape
 
-	gmm['mu'] = np.array(gmm['mu'])
-	gmm['prec'] = np.array(gmm['prec'])
-	gmm['cov'] = np.array(gmm['cov'])
-	gmm['w'] = np.array(gmm['w'])
+	gmm = {}
+	gmm['mu'] = np.array(in_gmm['mu'])
+	gmm['prec'] = np.array(in_gmm['prec'])
+	gmm['cov'] = np.array(in_gmm['cov'])
+	gmm['w'] = np.array(in_gmm['w'])
 
 	K = len(gmm['w'])
 	gmm['w'] = gmm['w'].reshape([K,1])	# (K,1)
+
+	assert(gmm['mu'].ndim==2 and gmm['prec'].ndim==3 and gmm['cov'].ndim==3)
+	assert(K==len(gmm['mu']) and K==len(gmm['prec']) and K==len(gmm['cov']))
+	assert(p==gmm['mu'].shape[1] and p==gmm['prec'].shape[1] and p==gmm['prec'].shape[2] and p==gmm['cov'].shape[1] and p==gmm['cov'].shape[2])
 		
 	# ========== Init prior hyper-parameters
 	#   v, tau, alpha: (K,1)
@@ -92,7 +97,7 @@ def gmmMap(gmm,X,priorRatio,maxItrNum=10,adptW=False,adptM=True,adptCov=False,hy
 		denominator = (tau+sumBETA).T	# (1,K)
 		updatedM = numerator/denominator	# (p,K)
 		if adptM:
-			gmm['mu'] = (updatedM.T).reshape([K,p,1])	# (K,p,1)
+			gmm['mu'] = (updatedM.T).reshape([K,p])	# (K,p,)
 
 		updatedCov = np.zeros([K,p,p])
 		for k in range(K):
@@ -152,9 +157,9 @@ if __name__ == '__main__':
 	# Do MAP 10 times to simulate the on-line adaptation for data is coming periodically
 	priorRatio = 0.9330329915368074	# similar to only using ONE MAP with priorRatio = 0.5. i.e. gmmMap(gmm,X,0.5,adptW=False,adptM=True,adptCov=False)
 	# priorRatio = 0.7943282347242815	# similar to only using ONE MAP with priorRatio = 0.1. i.e. gmmMap(gmm,X,0.1,adptW=False,adptM=True,adptCov=False)
-	gmm, rtn_hyper = gmmMap(gmm,X,0.1,adptW=False,adptM=True,adptCov=False)
-	# for i in range(9):
-	# 	gmm, rtn_hyper = gmmMap(gmm,X,priorRatio,adptW=False,adptM=True,adptCov=False,hyper=rtn_hyper)
+	gmm, rtn_hyper = gmmMap(gmm,X,priorRatio,adptW=False,adptM=True,adptCov=False)
+	for i in range(9):
+		gmm, rtn_hyper = gmmMap(gmm,X,priorRatio,adptW=False,adptM=True,adptCov=False,hyper=rtn_hyper)
 
 	# Distributions after MAP
 	pts1_map = guassianPlot2D(gmm['mu'][0], gmm['cov'][0])
