@@ -146,7 +146,7 @@ if __name__ == '__main__':
 	X1 = sampleByGaussian([-5, -7], [[3.0, -1.0], [-1.0, 1.0]], N)
 	# We let X2 (corresponding to mixture 2's adaptation data) be empty.
 	# We do this for checking the behavior of MAP while missing some data for an mixture
-	X3 = sampleByGaussian([-1.0, 4.3], [[1, 3.0/5.0], [3.0/5.0, 2]], N/2)
+	X3 = sampleByGaussian([-1.0, 4.3], [[1, 3.0/5.0], [3.0/5.0, 2]], int(N/2))
 	X = np.concatenate([X1,X3],axis=1)
 
 	# Distributions for UBM
